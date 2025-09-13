@@ -1,0 +1,16 @@
+{
+  "name": "whoami-key-system",
+  "version": "1.0.0",
+  "description": "Key system for Delta Executor with 1 user 1 device restriction",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
