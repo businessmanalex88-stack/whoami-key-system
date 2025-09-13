@@ -1,11 +1,17 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs18.x"
+    "api/**/*.js": {
+      "runtime": "@vercel/node@20.x"
     }
   },
   "env": {
     "ADMIN_PASSWORD": "Whoamidev1819"
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/public/admin.html"
+    }
+  ]
 }
