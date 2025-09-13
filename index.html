@@ -13,10 +13,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1000px; margin: 0 auto; }
         .header {
             text-align: center;
             margin-bottom: 40px;
@@ -30,10 +27,6 @@
             color: #00ff7f;
             margin-bottom: 10px;
         }
-        .header p {
-            color: #b0ffb0;
-            font-size: 1.2em;
-        }
         .status {
             background: rgba(20, 20, 20, 0.9);
             padding: 20px;
@@ -45,7 +38,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
         }
         .test-card {
             background: rgba(30, 30, 30, 0.9);
@@ -56,7 +48,6 @@
         .test-card h3 {
             color: #00ff7f;
             margin-bottom: 15px;
-            font-size: 1.3em;
         }
         .btn {
             background: linear-gradient(45deg, #00ff7f, #00cc66);
@@ -66,10 +57,9 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
-            transition: all 0.3s ease;
             width: 100%;
             margin: 5px 0;
+            transition: all 0.3s ease;
         }
         .btn:hover {
             background: linear-gradient(45deg, #00cc66, #009955);
@@ -83,7 +73,6 @@
             border: 1px solid rgba(0, 255, 127, 0.3);
             border-radius: 6px;
             color: white;
-            font-size: 14px;
         }
         .input:focus {
             outline: none;
@@ -103,77 +92,124 @@
         .success { color: #00ff7f; }
         .error { color: #ff6666; }
         .loading { color: #ffaa00; }
+        .api-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .api-online { background: #00ff7f; color: black; }
+        .api-offline { background: #ff6666; color: white; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🔐 WarpahVip Key System</h1>
-            <p>Professional Key Management & Validation System</p>
+            <p>Professional Delta Executor Key Management</p>
+            <div id="apiStatus">
+                <span>API Status: </span>
+                <span id="statusIndicator" class="api-status">Checking...</span>
+            </div>
         </div>
 
         <div class="status">
-            <h3>🔧 System Status</h3>
-            <p>Testing API endpoints and system functionality...</p>
-            <div id="systemStatus" class="result">Initializing...</div>
+            <h3>📊 System Dashboard</h3>
+            <div id="systemInfo">Loading system information...</div>
         </div>
 
         <div class="test-grid">
             <div class="test-card">
-                <h3>🧪 API Connection Test</h3>
-                <button class="btn" onclick="testConnection()">Test API Connection</button>
-                <div id="connectionResult" class="result">Click test button...</div>
-            </div>
-
-            <div class="test-card">
-                <h3>🔑 Key Management</h3>
+                <h3>🔑 Generate New Keys</h3>
                 <input type="password" class="input" id="adminPass" placeholder="Admin Password" value="Whoamidev1819">
-                <input type="number" class="input" id="keyCount" placeholder="Key Count" value="3" min="1" max="10">
+                <input type="number" class="input" id="keyCount" placeholder="Number of keys" value="3" min="1" max="10">
                 <button class="btn" onclick="generateKeys()">Generate Keys</button>
-                <button class="btn" onclick="viewAllKeys()">View All Keys</button>
-                <div id="keyResult" class="result">Management results...</div>
+                <div id="generateResult" class="result">Ready to generate keys...</div>
             </div>
 
             <div class="test-card">
-                <h3>✅ Key Validation Test</h3>
+                <h3>📋 View All Keys</h3>
+                <button class="btn" onclick="loadAllKeys()">Load All Keys</button>
+                <button class="btn" onclick="refreshKeys()" style="background: linear-gradient(45deg, #007acc, #005999);">🔄 Refresh</button>
+                <div id="keysResult" class="result">Click Load All Keys...</div>
+            </div>
+
+            <div class="test-card">
+                <h3>✅ Test Key Validation</h3>
                 <input type="text" class="input" id="testKey" placeholder="Enter key (try: WARPAH_TEST001)">
                 <input type="text" class="input" id="testUser" placeholder="User ID" value="testuser123">
                 <button class="btn" onclick="validateKey()">Validate Key</button>
-                <div id="validateResult" class="result">Validation results...</div>
+                <div id="validateResult" class="result">Enter a key to validate...</div>
             </div>
 
             <div class="test-card">
-                <h3>📊 System Info</h3>
-                <button class="btn" onclick="getSystemInfo()">Get System Info</button>
-                <div id="infoResult" class="result">System information...</div>
+                <h3>🔧 API Testing</h3>
+                <button class="btn" onclick="testConnection()">Test API Connection</button>
+                <button class="btn" onclick="testAllEndpoints()" style="background: linear-gradient(45deg, #ff7f00, #cc6600);">Test All Endpoints</button>
+                <div id="apiResult" class="result">API testing tools...</div>
             </div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: rgba(20, 20, 20, 0.5); border-radius: 10px; text-align: center;">
+            <h3 style="color: #00ff7f; margin-bottom: 10px;">🎮 Ready for Roblox Integration</h3>
+            <p>API Base URL: <code style="color: #00ff7f;">${window.location.origin}/api</code></p>
+            <p>Available test keys: WARPAH_TEST001, WARPAH_TEST002</p>
         </div>
     </div>
 
     <script>
         const API_BASE = '/api';
 
-        // Auto-test on page load
+        // Auto-load on page startup
         window.onload = function() {
             testConnection();
+            loadSystemInfo();
         };
 
         async function testConnection() {
-            updateResult('connectionResult', 'Testing API connection...', 'loading');
+            const statusIndicator = document.getElementById('statusIndicator');
+            statusIndicator.textContent = 'Testing...';
+            statusIndicator.className = 'api-status';
             
             try {
                 const response = await fetch(`${API_BASE}/test`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    updateResult('connectionResult', `✅ API Connected Successfully!\\n${JSON.stringify(data, null, 2)}`, 'success');
-                    updateSystemStatus('✅ API Connection: OK');
+                    statusIndicator.textContent = 'ONLINE';
+                    statusIndicator.className = 'api-status api-online';
+                    updateResult('apiResult', `✅ API Connection: SUCCESS\\n${JSON.stringify(data, null, 2)}`, 'success');
                 } else {
-                    updateResult('connectionResult', `⚠️ API Response Error\\n${JSON.stringify(data, null, 2)}`, 'error');
+                    throw new Error('API returned error');
                 }
             } catch (error) {
-                updateResult('connectionResult', `❌ Connection Failed: ${error.message}`, 'error');
-                updateSystemStatus('❌ API Connection: FAILED');
+                statusIndicator.textContent = 'OFFLINE';
+                statusIndicator.className = 'api-status api-offline';
+                updateResult('apiResult', `❌ API Connection: FAILED\\n${error.message}`, 'error');
+            }
+        }
+
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/admin?password=Whoamidev1819`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const info = `
+📊 System Status: Operational
+🔑 Total Keys: ${data.total}
+✅ Active Keys: ${data.active}
+🕐 Last Update: ${new Date(data.timestamp).toLocaleString()}
+🌐 Domain: ${window.location.origin}
+                    `.trim();
+                    
+                    document.getElementById('systemInfo').textContent = info;
+                } else {
+                    document.getElementById('systemInfo').textContent = '❌ Failed to load system information';
+                }
+            } catch (error) {
+                document.getElementById('systemInfo').textContent = `❌ Error: ${error.message}`;
             }
         }
 
@@ -181,7 +217,7 @@
             const password = document.getElementById('adminPass').value;
             const count = parseInt(document.getElementById('keyCount').value) || 1;
             
-            updateResult('keyResult', 'Generating keys...', 'loading');
+            updateResult('generateResult', 'Generating keys...', 'loading');
             
             try {
                 const response = await fetch(`${API_BASE}/create-key`, {
@@ -193,51 +229,64 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    let resultText = `✅ Generated ${data.count} keys:\\n\\n`;
+                    let result = `✅ Generated ${data.count} keys:\\n\\n`;
                     data.keys.forEach(key => {
-                        resultText += `🔑 ${key}\\n`;
+                        result += `🔑 ${key}\\n`;
                     });
-                    updateResult('keyResult', resultText, 'success');
+                    updateResult('generateResult', result, 'success');
+                    
+                    // Auto-refresh system info
+                    setTimeout(loadSystemInfo, 1000);
                 } else {
-                    updateResult('keyResult', `❌ ${data.error || 'Generation failed'}`, 'error');
+                    updateResult('generateResult', `❌ ${data.error || 'Generation failed'}`, 'error');
                 }
             } catch (error) {
-                updateResult('keyResult', `❌ Error: ${error.message}`, 'error');
+                updateResult('generateResult', `❌ Error: ${error.message}`, 'error');
             }
         }
 
-        async function viewAllKeys() {
+        async function loadAllKeys() {
             const password = document.getElementById('adminPass').value;
             
-            updateResult('keyResult', 'Loading keys...', 'loading');
+            updateResult('keysResult', 'Loading all keys...', 'loading');
             
             try {
                 const response = await fetch(`${API_BASE}/admin?password=${password}`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    let resultText = `📊 Total: ${data.total} keys | Active: ${data.active}\\n\\n`;
-                    data.keys.forEach(key => {
-                        const status = key.active && Date.now() < key.expires ? 'ACTIVE' : 'EXPIRED';
-                        const bound = key.device_id ? 'BOUND' : 'UNBOUND';
-                        resultText += `🔑 ${key.key}\\n`;
-                        resultText += `   Status: ${status} | ${bound} | Used: ${key.usage_count}x\\n\\n`;
-                    });
-                    updateResult('keyResult', resultText, 'success');
+                    let result = `📊 Total: ${data.total} keys | Active: ${data.active}\\n\\n`;
+                    
+                    if (data.keys.length === 0) {
+                        result += 'No keys found. Generate some keys first.';
+                    } else {
+                        data.keys.forEach(key => {
+                            const isActive = key.active && Date.now() < key.expires;
+                            const status = isActive ? '✅ ACTIVE' : '❌ EXPIRED';
+                            const bound = key.device_id ? '🔒 BOUND' : '🔓 UNBOUND';
+                            const expireDate = new Date(key.expires).toLocaleDateString();
+                            
+                            result += `🔑 ${key.key}\\n`;
+                            result += `   ${status} | ${bound} | Used: ${key.usage_count}x\\n`;
+                            result += `   Expires: ${expireDate}\\n\\n`;
+                        });
+                    }
+                    
+                    updateResult('keysResult', result, 'success');
                 } else {
-                    updateResult('keyResult', `❌ ${data.error || 'Failed to load keys'}`, 'error');
+                    updateResult('keysResult', `❌ ${data.error || 'Failed to load keys'}`, 'error');
                 }
             } catch (error) {
-                updateResult('keyResult', `❌ Error: ${error.message}`, 'error');
+                updateResult('keysResult', `❌ Error: ${error.message}`, 'error');
             }
         }
 
         async function validateKey() {
-            const key = document.getElementById('testKey').value;
-            const user_id = document.getElementById('testUser').value;
+            const key = document.getElementById('testKey').value.trim();
+            const user_id = document.getElementById('testUser').value.trim();
             
             if (!key) {
-                updateResult('validateResult', '⚠️ Please enter a key', 'error');
+                updateResult('validateResult', '⚠️ Please enter a key to validate', 'error');
                 return;
             }
             
@@ -249,35 +298,60 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         key: key,
-                        user_id: user_id,
-                        device_info: { id: 'browser_test', model: 'Test', brand: 'Browser' }
+                        user_id: user_id || 'testuser',
+                        device_info: { id: 'browser_test', model: 'Browser', brand: 'Test' }
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    updateResult('validateResult', `✅ Key Valid!\\n\\n${JSON.stringify(data, null, 2)}`, 'success');
+                    const result = `✅ KEY VALID!\\n\\n` +
+                        `Key: ${data.keyData.key}\\n` +
+                        `Usage Count: ${data.keyData.usage_count}\\n` +
+                        `Device Bound: ${data.keyData.device_bound ? 'Yes' : 'No'}\\n` +
+                        `Expires: ${new Date(data.keyData.expires).toLocaleDateString()}`;
+                    
+                    updateResult('validateResult', result, 'success');
                 } else {
-                    updateResult('validateResult', `❌ ${data.reason}\\n\\n${JSON.stringify(data, null, 2)}`, 'error');
+                    updateResult('validateResult', `❌ VALIDATION FAILED\\n\\nReason: ${data.reason}`, 'error');
                 }
             } catch (error) {
                 updateResult('validateResult', `❌ Error: ${error.message}`, 'error');
             }
         }
 
-        async function getSystemInfo() {
-            updateResult('infoResult', 'Getting system info...', 'loading');
+        async function testAllEndpoints() {
+            updateResult('apiResult', 'Testing all endpoints...', 'loading');
             
-            const info = {
-                timestamp: new Date().toISOString(),
-                domain: window.location.origin,
-                api_base: API_BASE,
-                user_agent: navigator.userAgent,
-                test_keys: ['WARPAH_TEST001', 'WARPAH_TEST002']
-            };
+            const tests = [
+                { name: 'GET /api/test', test: () => fetch('/api/test') },
+                { name: 'GET /api/admin', test: () => fetch('/api/admin?password=Whoamidev1819') },
+                { name: 'POST /api/validate', test: () => fetch('/api/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'WARPAH_TEST001', user_id: 'test', device_info: { id: 'test' }})
+                })}
+            ];
             
-            updateResult('infoResult', JSON.stringify(info, null, 2), 'success');
+            let result = 'Endpoint Test Results:\\n\\n';
+            
+            for (const test of tests) {
+                try {
+                    const response = await test.test();
+                    const status = response.ok ? '✅' : '❌';
+                    result += `${status} ${test.name} - Status: ${response.status}\\n`;
+                } catch (error) {
+                    result += `❌ ${test.name} - Error: ${error.message}\\n`;
+                }
+            }
+            
+            updateResult('apiResult', result, 'success');
+        }
+
+        function refreshKeys() {
+            loadAllKeys();
+            loadSystemInfo();
         }
 
         function updateResult(elementId, text, type) {
@@ -286,9 +360,8 @@
             element.className = `result ${type}`;
         }
 
-        function updateSystemStatus(status) {
-            document.getElementById('systemStatus').textContent = status;
-        }
+        // Auto-refresh system info every 30 seconds
+        setInterval(loadSystemInfo, 30000);
     </script>
 </body>
 </html>
