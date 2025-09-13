@@ -1,4 +1,7 @@
-const database = require('../lib/database');
+// Simple in-memory database
+let database = {
+    usage_logs: []
+};
 
 export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,34 +13,36 @@ export default function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-        // Log usage from client
-        const { key, user, userId, timestamp, place } = req.body;
-        
-        database.data.usage_logs.push({
-            key: key,
-            user: user,
-            user_id: userId,
-            timestamp: timestamp,
-            place_id: place,
-            action: 'script_load'
-        });
-        database.saveData();
-        
-        return res.status(200).json({ success: true });
+        try {
+            const { key, user, userId, timestamp, place } = req.body;
+            
+            database.usage_logs.push({
+                key: key,
+                user: user,
+                user_id: userId,
+                timestamp: timestamp,
+                place_id: place,
+                action: 'script_load'
+            });
+            
+            return res.status(200).json({ success: true });
+        } catch (error) {
+            return res.status(500).json({ success: false });
+        }
     }
 
     if (req.method === 'GET') {
         const { password, limit = 100 } = req.query;
         
-        if (password !== process.env.ADMIN_PASSWORD && password !== 'Whoamidev1819') {
+        if (password !== 'Whoamidev1819') {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const logs = database.data.usage_logs.slice(-limit);
+        const logs = database.usage_logs.slice(-limit);
         return res.status(200).json({ 
             success: true, 
             logs: logs,
-            total: database.data.usage_logs.length
+            total: database.usage_logs.length
         });
     }
 
