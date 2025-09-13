@@ -1,113 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WarpahVip Key System</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WarpahVip Key System</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
-            background: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             color: white;
+            min-height: 100vh;
             padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
         }
         .container {
-            background: #2a2a2a;
-            padding: 30px;
-            border-radius: 10px;
-            margin: 20px 0;
+            max-width: 1000px;
+            margin: 0 auto;
         }
-        h1, h2 {
-            color: #00ff7f;
+        .header {
             text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(0, 255, 127, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 127, 0.3);
         }
-        button {
-            background: #00ff7f;
+        .header h1 {
+            font-size: 3em;
+            color: #00ff7f;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #b0ffb0;
+            font-size: 1.2em;
+        }
+        .status {
+            background: rgba(20, 20, 20, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 127, 0.2);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: rgba(30, 30, 30, 0.9);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 127, 0.2);
+        }
+        .test-card h3 {
+            color: #00ff7f;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .btn {
+            background: linear-gradient(45deg, #00ff7f, #00cc66);
             color: black;
             border: none;
-            padding: 12px 24px;
-            border-radius: 5px;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            margin: 10px;
             font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 5px 0;
         }
-        button:hover {
-            background: #00cc66;
+        .btn:hover {
+            background: linear-gradient(45deg, #00cc66, #009955);
+            transform: translateY(-2px);
         }
-        input {
-            padding: 10px;
-            margin: 5px;
-            border: 1px solid #555;
-            background: #333;
+        .input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(40, 40, 40, 0.8);
+            border: 1px solid rgba(0, 255, 127, 0.3);
+            border-radius: 6px;
             color: white;
-            border-radius: 5px;
+            font-size: 14px;
+        }
+        .input:focus {
+            outline: none;
+            border-color: #00ff7f;
         }
         .result {
-            background: #333;
+            background: rgba(15, 15, 15, 0.9);
             padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
             overflow-y: auto;
-            font-family: monospace;
+            border: 1px solid rgba(0, 255, 127, 0.1);
         }
+        .success { color: #00ff7f; }
+        .error { color: #ff6666; }
+        .loading { color: #ffaa00; }
     </style>
 </head>
 <body>
-    <h1>🔐 WarpahVip Key System</h1>
-    <p style="text-align: center; color: #aaa;">Simple Key Management System</p>
-
     <div class="container">
-        <h2>🔬 Test API Connection</h2>
-        <button onclick="testAPI()">Test API</button>
-        <div id="testResult" class="result"></div>
-    </div>
+        <div class="header">
+            <h1>🔐 WarpahVip Key System</h1>
+            <p>Professional Key Management & Validation System</p>
+        </div>
 
-    <div class="container">
-        <h2>🔑 Generate Keys</h2>
-        <input type="password" id="adminPassword" placeholder="Admin Password" value="Whoamidev1819">
-        <input type="number" id="keyCount" placeholder="Count" value="5" min="1" max="10">
-        <button onclick="generateKeys()">Generate Keys</button>
-        <div id="generateResult" class="result"></div>
-    </div>
+        <div class="status">
+            <h3>🔧 System Status</h3>
+            <p>Testing API endpoints and system functionality...</p>
+            <div id="systemStatus" class="result">Initializing...</div>
+        </div>
 
-    <div class="container">
-        <h2>📋 View Keys</h2>
-        <button onclick="viewKeys()">View All Keys</button>
-        <div id="keysResult" class="result"></div>
-    </div>
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>🧪 API Connection Test</h3>
+                <button class="btn" onclick="testConnection()">Test API Connection</button>
+                <div id="connectionResult" class="result">Click test button...</div>
+            </div>
 
-    <div class="container">
-        <h2>✅ Test Key Validation</h2>
-        <input type="text" id="testKey" placeholder="Enter key to test">
-        <button onclick="testKeyValidation()">Test Key</button>
-        <div id="validateResult" class="result"></div>
+            <div class="test-card">
+                <h3>🔑 Key Management</h3>
+                <input type="password" class="input" id="adminPass" placeholder="Admin Password" value="Whoamidev1819">
+                <input type="number" class="input" id="keyCount" placeholder="Key Count" value="3" min="1" max="10">
+                <button class="btn" onclick="generateKeys()">Generate Keys</button>
+                <button class="btn" onclick="viewAllKeys()">View All Keys</button>
+                <div id="keyResult" class="result">Management results...</div>
+            </div>
+
+            <div class="test-card">
+                <h3>✅ Key Validation Test</h3>
+                <input type="text" class="input" id="testKey" placeholder="Enter key (try: WARPAH_TEST001)">
+                <input type="text" class="input" id="testUser" placeholder="User ID" value="testuser123">
+                <button class="btn" onclick="validateKey()">Validate Key</button>
+                <div id="validateResult" class="result">Validation results...</div>
+            </div>
+
+            <div class="test-card">
+                <h3>📊 System Info</h3>
+                <button class="btn" onclick="getSystemInfo()">Get System Info</button>
+                <div id="infoResult" class="result">System information...</div>
+            </div>
+        </div>
     </div>
 
     <script>
         const API_BASE = '/api';
 
-        async function testAPI() {
-            const result = document.getElementById('testResult');
-            result.innerHTML = 'Testing API...';
+        // Auto-test on page load
+        window.onload = function() {
+            testConnection();
+        };
+
+        async function testConnection() {
+            updateResult('connectionResult', 'Testing API connection...', 'loading');
             
             try {
                 const response = await fetch(`${API_BASE}/test`);
                 const data = await response.json();
-                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success) {
+                    updateResult('connectionResult', `✅ API Connected Successfully!\\n${JSON.stringify(data, null, 2)}`, 'success');
+                    updateSystemStatus('✅ API Connection: OK');
+                } else {
+                    updateResult('connectionResult', `⚠️ API Response Error\\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
             } catch (error) {
-                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+                updateResult('connectionResult', `❌ Connection Failed: ${error.message}`, 'error');
+                updateSystemStatus('❌ API Connection: FAILED');
             }
         }
 
         async function generateKeys() {
-            const result = document.getElementById('generateResult');
-            const password = document.getElementById('adminPassword').value;
-            const count = parseInt(document.getElementById('keyCount').value);
+            const password = document.getElementById('adminPass').value;
+            const count = parseInt(document.getElementById('keyCount').value) || 1;
             
-            result.innerHTML = 'Generating keys...';
+            updateResult('keyResult', 'Generating keys...', 'loading');
             
             try {
                 const response = await fetch(`${API_BASE}/create-key`, {
@@ -119,58 +193,55 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    let html = `<strong>Generated ${data.count} keys:</strong><br><br>`;
+                    let resultText = `✅ Generated ${data.count} keys:\\n\\n`;
                     data.keys.forEach(key => {
-                        html += `<div style="margin: 5px 0; padding: 8px; background: #444; border-radius: 3px;">${key}</div>`;
+                        resultText += `🔑 ${key}\\n`;
                     });
-                    result.innerHTML = html;
+                    updateResult('keyResult', resultText, 'success');
                 } else {
-                    result.innerHTML = `<span style="color: #ff6666">Error: ${data.error}</span>`;
+                    updateResult('keyResult', `❌ ${data.error || 'Generation failed'}`, 'error');
                 }
             } catch (error) {
-                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+                updateResult('keyResult', `❌ Error: ${error.message}`, 'error');
             }
         }
 
-        async function viewKeys() {
-            const result = document.getElementById('keysResult');
-            const password = document.getElementById('adminPassword').value;
+        async function viewAllKeys() {
+            const password = document.getElementById('adminPass').value;
             
-            result.innerHTML = 'Loading keys...';
+            updateResult('keyResult', 'Loading keys...', 'loading');
             
             try {
                 const response = await fetch(`${API_BASE}/admin?password=${password}`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    let html = `<strong>Total: ${data.total} keys, Active: ${data.active}</strong><br><br>`;
+                    let resultText = `📊 Total: ${data.total} keys | Active: ${data.active}\\n\\n`;
                     data.keys.forEach(key => {
-                        const status = key.active && Date.now() < key.expires ? 'Active' : 'Expired';
-                        const color = status === 'Active' ? '#00ff7f' : '#ff6666';
-                        html += `<div style="margin: 10px 0; padding: 10px; background: #444; border-radius: 5px;">
-                            <strong style="color: ${color}">${key.key}</strong><br>
-                            <small>Status: ${status} | Used: ${key.usage_count} times | Device: ${key.device_id || 'Unbound'}</small>
-                        </div>`;
+                        const status = key.active && Date.now() < key.expires ? 'ACTIVE' : 'EXPIRED';
+                        const bound = key.device_id ? 'BOUND' : 'UNBOUND';
+                        resultText += `🔑 ${key.key}\\n`;
+                        resultText += `   Status: ${status} | ${bound} | Used: ${key.usage_count}x\\n\\n`;
                     });
-                    result.innerHTML = html;
+                    updateResult('keyResult', resultText, 'success');
                 } else {
-                    result.innerHTML = `<span style="color: #ff6666">Error: ${data.error}</span>`;
+                    updateResult('keyResult', `❌ ${data.error || 'Failed to load keys'}`, 'error');
                 }
             } catch (error) {
-                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+                updateResult('keyResult', `❌ Error: ${error.message}`, 'error');
             }
         }
 
-        async function testKeyValidation() {
-            const result = document.getElementById('validateResult');
+        async function validateKey() {
             const key = document.getElementById('testKey').value;
+            const user_id = document.getElementById('testUser').value;
             
             if (!key) {
-                result.innerHTML = '<span style="color: #ff6666">Please enter a key</span>';
+                updateResult('validateResult', '⚠️ Please enter a key', 'error');
                 return;
             }
             
-            result.innerHTML = 'Validating key...';
+            updateResult('validateResult', 'Validating key...', 'loading');
             
             try {
                 const response = await fetch(`${API_BASE}/validate`, {
@@ -178,27 +249,46 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         key: key,
-                        user_id: 'testuser123',
-                        device_info: { id: 'testdevice', model: 'Android', brand: 'Delta' }
+                        user_id: user_id,
+                        device_info: { id: 'browser_test', model: 'Test', brand: 'Browser' }
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    result.innerHTML = `<span style="color: #00ff7f">✅ Key Valid!</span><br><pre>${JSON.stringify(data.keyData, null, 2)}</pre>`;
+                    updateResult('validateResult', `✅ Key Valid!\\n\\n${JSON.stringify(data, null, 2)}`, 'success');
                 } else {
-                    result.innerHTML = `<span style="color: #ff6666">❌ ${data.reason}</span>`;
+                    updateResult('validateResult', `❌ ${data.reason}\\n\\n${JSON.stringify(data, null, 2)}`, 'error');
                 }
             } catch (error) {
-                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+                updateResult('validateResult', `❌ Error: ${error.message}`, 'error');
             }
         }
 
-        // Auto test API on page load
-        window.onload = function() {
-            testAPI();
-        };
+        async function getSystemInfo() {
+            updateResult('infoResult', 'Getting system info...', 'loading');
+            
+            const info = {
+                timestamp: new Date().toISOString(),
+                domain: window.location.origin,
+                api_base: API_BASE,
+                user_agent: navigator.userAgent,
+                test_keys: ['WARPAH_TEST001', 'WARPAH_TEST002']
+            };
+            
+            updateResult('infoResult', JSON.stringify(info, null, 2), 'success');
+        }
+
+        function updateResult(elementId, text, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = `result ${type}`;
+        }
+
+        function updateSystemStatus(status) {
+            document.getElementById('systemStatus').textContent = status;
+        }
     </script>
 </body>
 </html>
