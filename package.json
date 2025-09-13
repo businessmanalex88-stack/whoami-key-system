@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "build": "echo 'Build complete'"
   },
   "dependencies": {
     "crypto": "^1.0.1"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   }
 }
