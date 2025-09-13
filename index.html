@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WarpahVip Key System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        h1, h2 {
+            color: #00ff7f;
+            text-align: center;
+        }
+        button {
+            background: #00ff7f;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00cc66;
+        }
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #555;
+            background: #333;
+            color: white;
+            border-radius: 5px;
+        }
+        .result {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 WarpahVip Key System</h1>
+    <p style="text-align: center; color: #aaa;">Simple Key Management System</p>
+
+    <div class="container">
+        <h2>🔬 Test API Connection</h2>
+        <button onclick="testAPI()">Test API</button>
+        <div id="testResult" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔑 Generate Keys</h2>
+        <input type="password" id="adminPassword" placeholder="Admin Password" value="Whoamidev1819">
+        <input type="number" id="keyCount" placeholder="Count" value="5" min="1" max="10">
+        <button onclick="generateKeys()">Generate Keys</button>
+        <div id="generateResult" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 View Keys</h2>
+        <button onclick="viewKeys()">View All Keys</button>
+        <div id="keysResult" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>✅ Test Key Validation</h2>
+        <input type="text" id="testKey" placeholder="Enter key to test">
+        <button onclick="testKeyValidation()">Test Key</button>
+        <div id="validateResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function testAPI() {
+            const result = document.getElementById('testResult');
+            result.innerHTML = 'Testing API...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/test`);
+                const data = await response.json();
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+            }
+        }
+
+        async function generateKeys() {
+            const result = document.getElementById('generateResult');
+            const password = document.getElementById('adminPassword').value;
+            const count = parseInt(document.getElementById('keyCount').value);
+            
+            result.innerHTML = 'Generating keys...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/create-key`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, count })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = `<strong>Generated ${data.count} keys:</strong><br><br>`;
+                    data.keys.forEach(key => {
+                        html += `<div style="margin: 5px 0; padding: 8px; background: #444; border-radius: 3px;">${key}</div>`;
+                    });
+                    result.innerHTML = html;
+                } else {
+                    result.innerHTML = `<span style="color: #ff6666">Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+            }
+        }
+
+        async function viewKeys() {
+            const result = document.getElementById('keysResult');
+            const password = document.getElementById('adminPassword').value;
+            
+            result.innerHTML = 'Loading keys...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin?password=${password}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = `<strong>Total: ${data.total} keys, Active: ${data.active}</strong><br><br>`;
+                    data.keys.forEach(key => {
+                        const status = key.active && Date.now() < key.expires ? 'Active' : 'Expired';
+                        const color = status === 'Active' ? '#00ff7f' : '#ff6666';
+                        html += `<div style="margin: 10px 0; padding: 10px; background: #444; border-radius: 5px;">
+                            <strong style="color: ${color}">${key.key}</strong><br>
+                            <small>Status: ${status} | Used: ${key.usage_count} times | Device: ${key.device_id || 'Unbound'}</small>
+                        </div>`;
+                    });
+                    result.innerHTML = html;
+                } else {
+                    result.innerHTML = `<span style="color: #ff6666">Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+            }
+        }
+
+        async function testKeyValidation() {
+            const result = document.getElementById('validateResult');
+            const key = document.getElementById('testKey').value;
+            
+            if (!key) {
+                result.innerHTML = '<span style="color: #ff6666">Please enter a key</span>';
+                return;
+            }
+            
+            result.innerHTML = 'Validating key...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        key: key,
+                        user_id: 'testuser123',
+                        device_info: { id: 'testdevice', model: 'Android', brand: 'Delta' }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `<span style="color: #00ff7f">✅ Key Valid!</span><br><pre>${JSON.stringify(data.keyData, null, 2)}</pre>`;
+                } else {
+                    result.innerHTML = `<span style="color: #ff6666">❌ ${data.reason}</span>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span style="color: #ff6666">Error: ${error.message}</span>`;
+            }
+        }
+
+        // Auto test API on page load
+        window.onload = function() {
+            testAPI();
+        };
+    </script>
+</body>
+</html>
