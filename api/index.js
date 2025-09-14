@@ -276,26 +276,40 @@ export default function handler(req, res) {
         }
 
         async function loadSystemInfo() {
-            try {
-                const response = await fetch(API_BASE + '/admin?password=Whoamidev1819');
-                const data = await response.json();
-                
-                if (data.success) {
-                    systemData = data;
-                    const info = \`📊 System Status: Online
-🔑 Total Keys: \${data.total}
-✅ Active Keys: \${data.active}
-🕐 Last Updated: \${new Date().toLocaleString()}
-🌐 Server Time: \${new Date(data.timestamp).toLocaleString()}\`;
-                    
-                    document.getElementById('systemInfo').textContent = info;
-                } else {
-                    document.getElementById('systemInfo').textContent = '❌ Failed to load system information\\nError: ' + (data.error || 'Unknown error');
-                }
-            } catch (error) {
-                document.getElementById('systemInfo').textContent = '❌ System Error: ' + error.message;
-            }
+    try {
+        const response = await fetch(API_BASE + '/admin?password=Whoamidev1819');
+        
+        // Check if response is OK
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
         }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Non-JSON response: ${text.substring(0, 100)}...`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            systemData = data;
+            const info = `📊 System Status: Online
+🔑 Total Keys: ${data.total}
+✅ Active Keys: ${data.active}
+🕐 Last Updated: ${new Date().toLocaleString()}
+🌐 Server Time: ${new Date(data.timestamp).toLocaleString()}`;
+            
+            document.getElementById('systemInfo').textContent = info;
+        } else {
+            document.getElementById('systemInfo').textContent = '❌ API Error: ' + (data.error || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('System Info Error:', error);
+        document.getElementById('systemInfo').textContent = '❌ System Error: ' + error.message;
+    }
+}
 
         async function generateKeys() {
             const password = document.getElementById('adminPass').value.trim();
