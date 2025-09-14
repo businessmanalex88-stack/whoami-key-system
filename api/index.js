@@ -336,17 +336,22 @@ export default function handler(req, res) {
                 
                 const data = await response.json();
                 
-                if (data.success) {
-                    let result = \`✅ Successfully generated \${data.count} keys:\\n\\n\`;
-                    data.keys.forEach((key, index) => {
-                        result += \`\${index + 1}. \${key}\\n\`;
-                    });
-                    result += \`\\n🔄 Auto-refreshing system info...\`;
-                    
-                    updateResult('generateResult', result, 'success');
-                    
-                    // Auto-refresh system info after 2 seconds
-                    setTimeout(loadSystemInfo, 2000);
+                // Di bagian function generateKeys, update bagian success:
+if (data.success) {
+    let result = `✅ Successfully generated ${data.count} keys:\\n\\n`;
+    data.keys.forEach((key, index) => {
+        result += `${index + 1}. ${key}\\n`;
+    });
+    result += `\\n🔄 Auto-refreshing system info...`;
+    
+    updateResult('generateResult', result, 'success');
+    
+    // Auto-refresh system info and keys list
+    setTimeout(() => {
+        loadSystemInfo();
+        loadAllKeys(); // Tambah ini untuk auto-refresh keys list
+    }, 2000);
+}
                 } else {
                     updateResult('generateResult', '❌ Generation Failed\\n\\nError: ' + (data.error || 'Unknown error'), 'error');
                 }
