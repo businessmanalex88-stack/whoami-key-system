@@ -1,5 +1,10 @@
 {
-  "name": "whoami-key-system",
-  "version": "1.0.0",
-  "type": "module"
+  "name": "warpahvip-key-system",
+  "version": "2.0.0",
+  "description": "Professional Delta Executor Key Management System",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  }
 }
