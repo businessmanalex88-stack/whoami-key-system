@@ -1,198 +1,118 @@
-// /api/validate.js - Key Validation API
-import fs from 'fs';
-
-const KEYS_FILE = '/tmp/keys.json';
-
-// Helper function to read keys
-function readKeys() {
-  try {
-    if (fs.existsSync(KEYS_FILE)) {
-      const data = fs.readFileSync(KEYS_FILE, 'utf8');
-      const parsedData = JSON.parse(data);
-      return parsedData.keys || [];
-    }
-    return [];
-  } catch (error) {
-    console.error('Error reading keys:', error);
-    return [];
-  }
-}
-
-// Helper function to write keys
-function writeKeys(keys) {
-  try {
-    const data = {
-      keys: keys,
-      last_updated: Date.now(),
-      version: '1.0'
-    };
-    fs.writeFileSync(KEYS_FILE, JSON.stringify(data, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error writing keys:', error);
-    return false;
-  }
-}
-
-// Generate device fingerprint from device info
-function generateDeviceFingerprint(deviceInfo) {
-  if (!deviceInfo) return null;
-  
-  const { id, model, brand, os, version } = deviceInfo;
-  return `${id || 'unknown'}_${model || 'unknown'}_${brand || 'unknown'}`.toLowerCase();
-}
-
 export default function handler(req, res) {
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({
-      success: false,
-      error: 'Method not allowed. Use POST.',
-      reason: 'invalid_method'
-    });
-  }
-
   try {
-    const { key, user_id, device_info } = req.body;
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Content-Type', 'application/json');
 
-    // Validate required parameters
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+      return res.status(200).json({ 
+        success: false,
+        error: 'Method not allowed' 
+      });
+    }
+
+    // Initialize database
+    if (!global.keyDatabase) {
+      global.keyDatabase = {
+        keys: {
+          'WARPAH_TEST001': {
+            key: 'WARPAH_TEST001',
+            created: Date.now(),
+            expires: Date.now() + (30 * 24 * 60 * 60 * 1000),
+            active: true,
+            device_id: null,
+            user_id: null,
+            usage_count: 0,
+            last_used: null
+          },
+          'WARPAH_TEST002': {
+            key: 'WARPAH_TEST002',
+            created: Date.now(),
+            expires: Date.now() + (30 * 24 * 60 * 60 * 1000),
+            active: true,
+            device_id: null,
+            user_id: null,
+            usage_count: 0,
+            last_used: null
+          }
+        },
+        usage_logs: []
+      };
+    }
+
+    const { key, user_id, device_info } = req.body || {};
+
     if (!key) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
-        error: 'Key is required',
-        reason: 'missing_key'
+        reason: 'Key is required'
       });
     }
 
-    if (!user_id) {
-      return res.status(400).json({
-        success: false,
-        error: 'User ID is required',
-        reason: 'missing_user_id'
-      });
-    }
-
-    // Read keys from storage
-    const keys = readKeys();
+    const keyData = global.keyDatabase.keys[key];
     
-    // Find the key
-    const keyIndex = keys.findIndex(k => k.key === key);
-    
-    if (keyIndex === -1) {
-      return res.status(404).json({
+    if (!keyData || !keyData.active) {
+      return res.status(200).json({
         success: false,
-        error: 'Key not found',
-        reason: 'key_not_found',
-        key: key
+        reason: 'Invalid key'
       });
     }
 
-    const keyData = keys[keyIndex];
-    const now = Date.now();
-
-    // Check if key is active
-    if (keyData.active === false) {
-      return res.status(403).json({
+    if (Date.now() > keyData.expires) {
+      return res.status(200).json({
         success: false,
-        error: 'Key has been deactivated',
-        reason: 'key_deactivated',
-        keyData: {
-          key: keyData.key,
-          status: 'deactivated'
-        }
+        reason: 'Key expired'
       });
     }
 
-    // Check if key has expired
-    if (keyData.expires && keyData.expires <= now) {
-      // Mark key as inactive
-      keys[keyIndex].active = false;
-      writeKeys(keys);
-      
-      return res.status(403).json({
-        success: false,
-        error: 'Key has expired',
-        reason: 'key_expired',
-        keyData: {
-          key: keyData.key,
-          expires: keyData.expires,
-          expired_at: new Date(keyData.expires).toISOString()
-        }
-      });
-    }
-
-    // Generate device fingerprint
-    const deviceFingerprint = generateDeviceFingerprint(device_info);
+    // Generate device ID
+    const deviceId = `${user_id || 'unknown'}_${device_info?.id || 'device'}_${device_info?.model || 'unknown'}`;
 
     // Check device binding
-    if (keyData.device_id) {
-      // Key is already bound to a device
-      if (keyData.device_id !== deviceFingerprint) {
-        return res.status(403).json({
-          success: false,
-          error: 'Key is bound to another device',
-          reason: 'device_mismatch',
-          keyData: {
-            key: keyData.key,
-            device_bound: true,
-            current_device: deviceFingerprint,
-            bound_device: keyData.device_id
-          }
-        });
-      }
-    } else {
-      // Bind key to this device (first time use)
-      keys[keyIndex].device_id = deviceFingerprint;
-      keys[keyIndex].device_bound = true;
-      keys[keyIndex].first_used_at = now;
+    if (keyData.device_id === null) {
+      keyData.device_id = deviceId;
+      keyData.user_id = user_id;
+    } else if (keyData.device_id !== deviceId) {
+      return res.status(200).json({
+        success: false,
+        reason: 'Key already bound to another device'
+      });
     }
 
-    // Update usage statistics
-    keys[keyIndex].usage_count = (keyData.usage_count || 0) + 1;
-    keys[keyIndex].last_used = now;
-    keys[keyIndex].last_user_id = user_id;
+    // Update usage
+    keyData.usage_count++;
+    keyData.last_used = Date.now();
 
-    // Save updated keys
-    const saveSuccess = writeKeys(keys);
-    if (!saveSuccess) {
-      console.error('Failed to save key updates');
-      // Continue anyway, don't fail validation
-    }
+    // Log usage
+    global.keyDatabase.usage_logs.push({
+      key: key,
+      user_id: user_id,
+      device_id: deviceId,
+      timestamp: Date.now(),
+      action: 'validate'
+    });
 
-    // Successful validation
     return res.status(200).json({
       success: true,
-      message: 'Key validation successful',
-      valid: true,
+      message: 'Key validated successfully',
       keyData: {
         key: keyData.key,
-        usage_count: keys[keyIndex].usage_count,
-        device_bound: !!keys[keyIndex].device_id,
+        usage_count: keyData.usage_count,
         expires: keyData.expires,
-        expires_in: keyData.expires ? Math.max(0, keyData.expires - now) : null,
-        first_use: !keyData.device_id, // True if this was first use
-        device_fingerprint: deviceFingerprint
-      },
-      user_id: user_id,
-      timestamp: now,
-      expires_at: keyData.expires ? new Date(keyData.expires).toISOString() : null
+        device_bound: keyData.device_id !== null
+      }
     });
 
   } catch (error) {
-    console.error('Validation Error:', error);
-    return res.status(500).json({
+    console.error('Validate Error:', error);
+    return res.status(200).json({
       success: false,
-      error: 'Internal server error during validation',
-      reason: 'server_error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      reason: 'Server error: ' + error.message
     });
   }
 }
