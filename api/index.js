@@ -256,12 +256,38 @@ export default function handler(req, res) {
             }
         }
 
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(\`Non-JSON response received: \${text.substring(0, 100)}...\`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Request failed:', error);
+                throw error;
+            }
+        }
+
         async function testConnection() {
             updateResult('apiResult', '🔄 Testing API connection...', 'loading');
             
             try {
-                const response = await fetch(API_BASE + '/test');
-                const data = await response.json();
+                const data = await makeRequest(API_BASE + '/test');
                 
                 if (data.success) {
                     updateStatus('🟢 API Online');
@@ -270,46 +296,32 @@ export default function handler(req, res) {
                     throw new Error('API returned non-success response');
                 }
             } catch (error) {
-                updateStatus('🔴 API Offline');
-                updateResult('apiResult', '❌ API Connection: FAILED\\n\\nError: ' + error.message, 'error');
+                updateStatus('🔴 API Offline - ' + error.message);
+                updateResult('apiResult', '❌ API Connection: FAILED\\n\\nError: ' + error.message + '\\n\\nPlease check if your API endpoints are properly configured.', 'error');
             }
         }
 
         async function loadSystemInfo() {
-    try {
-        const response = await fetch(API_BASE + '/admin?password=Whoamidev1819');
-        
-        // Check if response is OK
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            try {
+                const data = await makeRequest(API_BASE + '/admin?password=Whoamidev1819');
+                
+                if (data.success) {
+                    systemData = data;
+                    const info = \`📊 System Status: Online
+🔑 Total Keys: \${data.total || 0}
+✅ Active Keys: \${data.active || 0}
+🕐 Last Updated: \${new Date().toLocaleString()}
+🌐 Server Time: \${data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A'}\`;
+                    
+                    document.getElementById('systemInfo').textContent = info;
+                } else {
+                    document.getElementById('systemInfo').textContent = '❌ API Error: ' + (data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('System Info Error:', error);
+                document.getElementById('systemInfo').textContent = '❌ System Error: ' + error.message + '\\n\\nMake sure your /api/admin.js file exists and returns proper JSON response.';
+            }
         }
-        
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            throw new Error(`Non-JSON response: ${text.substring(0, 100)}...`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            systemData = data;
-            const info = `📊 System Status: Online
-🔑 Total Keys: ${data.total}
-✅ Active Keys: ${data.active}
-🕐 Last Updated: ${new Date().toLocaleString()}
-🌐 Server Time: ${new Date(data.timestamp).toLocaleString()}`;
-            
-            document.getElementById('systemInfo').textContent = info;
-        } else {
-            document.getElementById('systemInfo').textContent = '❌ API Error: ' + (data.error || 'Unknown error');
-        }
-    } catch (error) {
-        console.error('System Info Error:', error);
-        document.getElementById('systemInfo').textContent = '❌ System Error: ' + error.message;
-    }
-}
 
         async function generateKeys() {
             const password = document.getElementById('adminPass').value.trim();
@@ -328,35 +340,32 @@ export default function handler(req, res) {
             updateResult('generateResult', \`🔄 Generating \${count} keys...\`, 'loading');
             
             try {
-                const response = await fetch(API_BASE + '/create-key', {
+                const data = await makeRequest(API_BASE + '/create-key', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password, count })
                 });
                 
-                const data = await response.json();
-                
-                // Di bagian function generateKeys, update bagian success:
-if (data.success) {
-    let result = `✅ Successfully generated ${data.count} keys:\\n\\n`;
-    data.keys.forEach((key, index) => {
-        result += `${index + 1}. ${key}\\n`;
-    });
-    result += `\\n🔄 Auto-refreshing system info...`;
-    
-    updateResult('generateResult', result, 'success');
-    
-    // Auto-refresh system info and keys list
-    setTimeout(() => {
-        loadSystemInfo();
-        loadAllKeys(); // Tambah ini untuk auto-refresh keys list
-    }, 2000);
-}
+                if (data.success) {
+                    let result = \`✅ Successfully generated \${data.count || data.keys.length} keys:\\n\\n\`;
+                    if (data.keys && Array.isArray(data.keys)) {
+                        data.keys.forEach((key, index) => {
+                            result += \`\${index + 1}. \${key}\\n\`;
+                        });
+                    }
+                    result += \`\\n🔄 Auto-refreshing system info...\`;
+                    
+                    updateResult('generateResult', result, 'success');
+                    
+                    // Auto-refresh system info and keys list
+                    setTimeout(() => {
+                        loadSystemInfo();
+                        loadAllKeys();
+                    }, 2000);
                 } else {
                     updateResult('generateResult', '❌ Generation Failed\\n\\nError: ' + (data.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
-                updateResult('generateResult', '❌ Network Error\\n\\nError: ' + error.message, 'error');
+                updateResult('generateResult', '❌ Network Error\\n\\nError: ' + error.message + '\\n\\nMake sure your /api/create-key.js file exists.', 'error');
             }
         }
 
@@ -371,13 +380,12 @@ if (data.success) {
             updateResult('keysResult', '🔄 Loading all keys...', 'loading');
             
             try {
-                const response = await fetch(API_BASE + \`/admin?password=\${encodeURIComponent(password)}\`);
-                const data = await response.json();
+                const data = await makeRequest(API_BASE + \`/admin?password=\${encodeURIComponent(password)}\`);
                 
                 if (data.success) {
-                    let result = \`📊 Key Statistics:\\nTotal: \${data.total} keys | Active: \${data.active} keys\\n\\n\`;
+                    let result = \`📊 Key Statistics:\\nTotal: \${data.total || 0} keys | Active: \${data.active || 0} keys\\n\\n\`;
                     
-                    if (data.keys.length === 0) {
+                    if (!data.keys || data.keys.length === 0) {
                         result += '📝 No keys found.\\n\\nUse the "Generate Keys" section to create new keys.';
                     } else {
                         result += '📋 Key Details:\\n\\n';
@@ -390,7 +398,7 @@ if (data.success) {
                             
                             result += \`\${index + 1}. \${key.key}\\n\`;
                             result += \`   Status: \${status} | Device: \${bound}\\n\`;
-                            result += \`   Usage: \${key.usage_count}x | Expires: \${expireDate}\\n\\n\`;
+                            result += \`   Usage: \${key.usage_count || 0}x | Expires: \${expireDate}\\n\\n\`;
                         });
                     }
                     
@@ -399,7 +407,7 @@ if (data.success) {
                     updateResult('keysResult', '❌ Failed to Load Keys\\n\\nError: ' + (data.error || 'Access denied'), 'error');
                 }
             } catch (error) {
-                updateResult('keysResult', '❌ Network Error\\n\\nError: ' + error.message, 'error');
+                updateResult('keysResult', '❌ Network Error\\n\\nError: ' + error.message + '\\n\\nMake sure your /api/admin.js file exists and returns proper JSON.', 'error');
             }
         }
 
@@ -415,9 +423,8 @@ if (data.success) {
             updateResult('validateResult', \`🔄 Validating key: \${key}...\`, 'loading');
             
             try {
-                const response = await fetch(API_BASE + '/validate', {
+                const data = await makeRequest(API_BASE + '/validate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         key: key,
                         user_id: user_id || 'testuser',
@@ -429,12 +436,10 @@ if (data.success) {
                     })
                 });
                 
-                const data = await response.json();
-                
                 if (data.success) {
                     const result = \`✅ KEY VALIDATION: SUCCESS\\n\\n\` +
                         \`🔑 Key: \${data.keyData.key}\\n\` +
-                        \`📊 Usage Count: \${data.keyData.usage_count}\\n\` +
+                        \`📊 Usage Count: \${data.keyData.usage_count || 0}\\n\` +
                         \`🔒 Device Bound: \${data.keyData.device_bound ? 'Yes' : 'No'}\\n\` +
                         \`⏰ Expires: \${new Date(data.keyData.expires).toLocaleDateString()}\\n\\n\` +
                         \`✅ This key is valid and ready to use!\`;
@@ -443,7 +448,7 @@ if (data.success) {
                 } else {
                     const result = \`❌ KEY VALIDATION: FAILED\\n\\n\` +
                         \`🔑 Key: \${key}\\n\` +
-                        \`❌ Reason: \${data.reason}\\n\\n\` +
+                        \`❌ Reason: \${data.reason || 'Unknown error'}\\n\\n\` +
                         \`💡 Tips:\\n\` +
                         \`• Check if key is typed correctly\\n\` +
                         \`• Ensure key hasn't expired\\n\` +
@@ -452,7 +457,7 @@ if (data.success) {
                     updateResult('validateResult', result, 'error');
                 }
             } catch (error) {
-                updateResult('validateResult', '❌ Network Error\\n\\nUnable to validate key: ' + error.message, 'error');
+                updateResult('validateResult', '❌ Network Error\\n\\nUnable to validate key: ' + error.message + '\\n\\nMake sure your /api/validate.js file exists.', 'error');
             }
         }
 
@@ -504,16 +509,12 @@ if (data.success) {
                     };
                     
                     if (endpoint.body) {
-                        options.headers = { 'Content-Type': 'application/json' };
                         options.body = JSON.stringify(endpoint.body);
                     }
                     
-                    const response = await fetch(endpoint.url, options);
-                    const status = response.ok ? '✅' : '❌';
-                    const statusCode = response.status;
-                    
-                    result += \`\${status} \${endpoint.name}\\n\`;
-                    result += \`   Status: \${statusCode} | \${endpoint.description}\\n\\n\`;
+                    await makeRequest(endpoint.url, options);
+                    result += \`✅ \${endpoint.name}\\n\`;
+                    result += \`   Status: OK | \${endpoint.description}\\n\\n\`;
                     
                 } catch (error) {
                     result += \`❌ \${endpoint.name}\\n\`;
@@ -522,7 +523,7 @@ if (data.success) {
             }
             
             result += '🔄 Test completed. All green checkmarks indicate working endpoints.';
-            updateResult('apiResult', result, 'success');
+            updateResult('apiResult', result, result.includes('❌') ? 'error' : 'success');
         }
 
         function refreshSystem() {
